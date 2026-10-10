@@ -6,7 +6,7 @@ varying vec2 vUv;
 uniform sampler2D uT1,uT2;
 uniform vec4 uC1,uC2;
 uniform vec2 uRes;
-uniform float uPx,uSeed,uHas2,uDip,uDbl;
+uniform float uPx,uSeed,uLS,uHas2,uDip,uDbl;
 uniform float uExp,uTemp,uTint,uCon,uSat,uFade,uMono;
 uniform vec3 uLift,uGamma,uGain,uShT,uHiT,uMonoTint;
 uniform mat3 uMat;
@@ -128,12 +128,12 @@ void main(){
   c=mix(c,vec3(0.80,0.82,0.86),uFade);
 
   if(uLeak>0.0){
-    float s1=h12(vec2(uSeed*7.3,1.7));
+    float s1=h12(vec2(uLS*7.3,1.7));
     float d=mix(st.x,1.0-st.x,step(0.5,s1));
-    float wob=0.5+0.5*sin(st.y*(2.0+s1*5.0)+uSeed*37.0);
-    float k=exp(-d*d*mix(5.0,22.0,h12(vec2(uSeed*3.1,9.2))))*(0.45+0.55*wob);
+    float wob=0.5+0.5*sin(st.y*(2.0+s1*5.0)+uLS*37.0);
+    float k=exp(-d*d*mix(5.0,22.0,h12(vec2(uLS*3.1,9.2))))*(0.45+0.55*wob);
     vec3 lc=mix(vec3(1.0,0.16,0.04),vec3(1.0,0.72,0.22),k);
-    vec2 cc=vec2(step(0.5,h12(vec2(uSeed*5.9,4.4))),h12(vec2(uSeed,2.2))*0.4);
+    vec2 cc=vec2(step(0.5,h12(vec2(uLS*5.9,4.4))),h12(vec2(uLS,2.2))*0.4);
     float k2=exp(-dot(st-cc,st-cc)*5.0)*0.6;
     vec3 lk=lc*k+vec3(1.0,0.35,0.5)*k2;
     c=1.0-(1.0-clamp(c,0.0,1.0))*(1.0-clamp(lk*uLeak*1.3,0.0,1.0));
@@ -162,8 +162,8 @@ void main(){
     }
     for(int k=0;k<3;k++){
       float fk=float(k);
-      float x=h12(vec2(fk*7.7+1.0,uSeed*29.0));
-      float on=step(1.0-0.5*uDust,h12(vec2(fk+2.0,uSeed*3.0)));
+      float x=h12(vec2(fk*7.7+1.0,uLS*29.0));
+      float on=step(1.0-0.5*uDust,h12(vec2(fk+2.0,uLS*3.0)));
       float wob=sin(st.y*20.0+fk)*0.0015;
       float ln=smoothstep(0.0013,0.0,abs(st.x-x-wob));
       dd+=ln*on*step(0.35,h12(vec2(floor(st.y*18.0),fk+uSeed)))*0.6;
@@ -264,7 +264,7 @@ const GC_Engine = (function(){
     const c1=crop(A,ha,zoom), c2=B?crop(B,ha,zoom):c1;
     v4('uC1',c1); v4('uC2',c2);
     if(U.uRes)gl.uniform2f(U.uRes,W,H);
-    f('uPx',Math.min(W,H)/1080); f('uSeed',r.seed||0);
+    f('uPx',Math.min(W,H)/1080); f('uSeed',r.seed||0); f('uLS',r.lseed!=null?r.lseed:(r.seed||0));   // uLS keeps leaks and scratches steady from frame to frame
     f('uHas2',B?1:0); f('uDip',dip?1:0); f('uDbl',lens.dbl&&!dip?1:0);
     f('uExp',p.exp);f('uTemp',p.temp);f('uTint',p.tint);f('uCon',p.con);f('uSat',p.sat);f('uFade',p.fade);f('uMono',p.mono);
     {const m=p.mat||GC_DEF.mat;if(U.uMat)gl.uniformMatrix3fv(U.uMat,false,new Float32Array([m[0],m[3],m[6],m[1],m[4],m[7],m[2],m[5],m[8]]));}
