@@ -1510,7 +1510,7 @@ function boot(){
     if(live.on&&tr&&tr.readyState!=='ended'){if(video.paused)video.play().catch(()=>{});return;}
     if(live.on)dropLive(); startLive(true);
   });
-  if(document.fonts&&document.fonts.load){Promise.all([document.fonts.load('20px VT323'),document.fonts.load('600 20px Archivo')]).then(requestDraw,()=>{});}
+  if(document.fonts&&document.fonts.load){Promise.all([document.fonts.load('20px VT323'),document.fonts.load('600 20px Archivo')]).then(()=>{requestDraw();centerCam();},()=>{});}
   DB.open().then(()=>DB.all()).then(all=>{shots=(all||[]).filter(s=>s&&s.id&&s.thumb).sort((a,b)=>b.ts-a.ts);ui();});
   startLive(true).then(ok=>{booting=false;if(!ok)wantLive=false;ui();requestDraw();});
   requestAnimationFrame(loop);
