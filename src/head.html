@@ -74,14 +74,24 @@ svg{display:block}
 .lvl.flat i{opacity:.35}
 .lvl b{position:absolute;top:calc(50% + 12px);font-family:var(--f-mono);font-weight:600;font-size:12px;line-height:1;letter-spacing:.06em;color:var(--text);text-shadow:0 1px 3px #000;font-variant-numeric:tabular-nums}
 .lvl.ok b{color:var(--accent)}
-.foc{position:absolute;width:68px;height:68px;margin:-34px 0 0 -34px;border:1.5px solid var(--accent);border-radius:6px;box-shadow:0 0 0 .5px rgba(0,0,0,.5);pointer-events:none;animation:focin var(--t-enter) var(--ease-out)}
+.foc{position:absolute;z-index:1;width:0;height:0;pointer-events:none}
+.foc .box{position:absolute;left:-34px;top:-34px;width:68px;height:68px;border:1.5px solid var(--accent);border-radius:6px;box-shadow:0 0 0 .5px rgba(0,0,0,.5);animation:focin var(--t-enter) var(--ease-out)}
+.evs{position:absolute;left:46px;top:-66px;width:30px;height:132px}
+.foc.flip .evs{left:auto;right:46px}
+.evs::before{content:"";position:absolute;left:14px;top:0;bottom:0;width:1.5px;border-radius:1px;background:var(--accent);box-shadow:0 0 2px rgba(0,0,0,.7);opacity:.45;transition:opacity var(--t-state) var(--ease)}
+.foc.drag .evs::before{opacity:.95}
+.evs .sun{position:absolute;left:0;top:calc(50% - 15px - var(--ev,0)*25%);width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:rgba(0,0,0,.55);color:var(--accent)}
+.evs .sun .ic{--ic:19px;stroke-width:2}
+.evs b{position:absolute;left:50%;top:calc(50% - 34px - var(--ev,0)*25%);transform:translateX(-50%);padding:1px 5px;border-radius:5px;background:rgba(0,0,0,.55);font-family:var(--f-mono);font-size:12px;font-weight:600;line-height:1.3;letter-spacing:.02em;color:var(--accent);white-space:nowrap;font-variant-numeric:tabular-nums}
 @keyframes focin{0%{transform:scale(1.4);opacity:.3}100%{transform:scale(1);opacity:1}}
 .big{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:140px;color:var(--text);text-shadow:0 2px 24px #000;pointer-events:none;font-variant-numeric:tabular-nums}
 .pillb{position:absolute;z-index:2;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border-radius:var(--r-pill);background:var(--glass);-webkit-backdrop-filter:blur(20px) saturate(1.4);backdrop-filter:blur(20px) saturate(1.4);box-shadow:inset 0 0 0 1px var(--hairline);color:var(--text);font-size:14px;font-weight:600;white-space:nowrap}
 .pillb::after{content:"";position:absolute;inset:-4px}
 .pillb.go{background:var(--accent);color:var(--on-accent);box-shadow:none}
 .pillb .ic{--ic:16px;stroke-width:2.2}
-#closePhoto,#aeBtn{left:12px;top:12px}
+#closePhoto{left:12px;top:12px}
+#aeBtn{right:12px;top:12px;gap:5px;padding:0 10px 0 9px;font-family:var(--f-mono);font-size:13px;letter-spacing:.02em;color:var(--accent);font-variant-numeric:tabular-nums}
+#aeBtn .ic:last-child{color:var(--text-2)}
 .tag{left:10px;top:10px}
 #saveLook{right:12px;top:12px}
 .tag{position:absolute;z-index:2;padding:5px 9px;border-radius:6px;background:var(--glass);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);font-family:var(--f-mono);font-size:11px;line-height:1.2;letter-spacing:.08em;text-transform:uppercase;color:var(--text);pointer-events:none}
@@ -284,6 +294,7 @@ textarea.field{font-family:var(--f-mono);font-size:12px;min-height:68px;resize:n
   <symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
   <symbol id="i-down" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
   <symbol id="i-heart" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></symbol>
@@ -310,7 +321,7 @@ textarea.field{font-family:var(--f-mono);font-size:12px;min-height:68px;resize:n
       <div class="gridl" id="gridl" hidden></div>
       <div class="flashfx" id="flashfx"></div>
       <div class="lvl" id="lvl" hidden><i></i><b id="lvlDeg"></b></div>
-      <div class="foc" id="foc" hidden></div>
+      <div class="foc" id="foc" hidden><i class="box"></i><div class="evs"><span class="sun"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></span><b id="evTxt"></b></div></div>
       <span class="tag" id="sampleTag" hidden>Sample</span>
     </div>
     <div class="standby" id="standby" hidden>
@@ -320,7 +331,7 @@ textarea.field{font-family:var(--f-mono);font-size:12px;min-height:68px;resize:n
       <button type="button" class="btn" id="sbBtn" hidden>Turn on camera</button>
     </div>
     <button type="button" class="pillb" id="closePhoto" hidden><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg>Close</button>
-    <button type="button" class="pillb" id="aeBtn" hidden aria-label="Clear the exposure point"></button>
+    <button type="button" class="pillb" id="aeBtn" hidden aria-label="Reset exposure"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg><span id="aeTxt"></span><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
     <button type="button" class="pillb go" id="saveLook" hidden>Save</button>
     <div class="big" id="big" hidden></div>
     <p class="say" id="osdMsg" role="status" aria-live="polite" hidden></p>

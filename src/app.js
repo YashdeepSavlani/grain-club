@@ -168,7 +168,7 @@ function setLook(id){
   S.date.on=!!(l.date&&l.date.on); if(l.date){S.date.style=l.date.style;S.date.color=l.date.color;}
 }
 function saveSettings(){
-  try{localStorage.setItem('grainclub.v1',JSON.stringify({rcp:snap(0),vsound:S.vsound,mode:S.mode,timer:S.timer,grid:S.grid,sound:S.sound,keep:S.keep,rollSize:S.rollSize,roll:S.roll,booth:S.booth,facing:S.facing,recipes:S.recipes,count:S.count}));}catch(e){}
+  try{localStorage.setItem('grainclub.v1',JSON.stringify({rcp:snap(0),vsound:S.vsound,mode:S.mode,timer:S.timer,grid:S.grid,sound:S.sound,keep:S.keep,rollSize:S.rollSize,roll:S.roll,booth:S.booth,facing:S.facing,recipes:S.recipes,count:S.count,hinted:!!S.hinted}));}catch(e){}
 }
 function loadSettings(){
   let d=null; try{d=JSON.parse(localStorage.getItem('grainclub.v1')||'null');}catch(e){}
@@ -178,7 +178,7 @@ function loadSettings(){
   S.rollSize=[0,12,24,36].indexOf(d.rollSize)>=0?d.rollSize:0;
   if(S.rollSize&&d.roll&&typeof d.roll.id==='string') S.roll={id:d.roll.id,size:S.rollSize,count:num(d.roll.count,0,36,0)|0};
   const b=d.booth||{}; S.booth={n:[2,4,6].indexOf(b.n)>=0?b.n:4,layout:b.layout==='grid'?'grid':'strip',paper:['white','cream','black'].indexOf(b.paper)>=0?b.paper:'white',story:!!b.story};
-  S.facing=d.facing==='user'?'user':'environment'; S.count=num(d.count,0,1e6,0)|0;
+  S.facing=d.facing==='user'?'user':'environment'; S.count=num(d.count,0,1e6,0)|0; S.hinted=!!d.hinted;
   if(Array.isArray(d.recipes)) S.recipes=d.recipes.slice(0,24).filter(x=>x&&typeof x.name==='string').map(x=>({name:x.name.slice(0,24),rcp:cleanRecipe(x.rcp)}));
 }
 
@@ -245,7 +245,7 @@ let pair=null;            // first shot held for a double exposure or a half-fra
 let booth=[];             // shots collected for the current photobooth strip
 const live={on:false,stream:null};
 let busyN=0, dirty=true, sheetName=null, galOpen=false, detOpen=false;
-let tapEV=0, lastR=null, levelOn=false, gotOri=false;
+let tapEV=0, userEV=0, lastR=null, levelOn=false, gotOri=false;   // tapEV: metered at the tapped point; userEV: the compensation you drag in
 let booting=true, camOK=false, wantLive=true, starting=null;
 let liveLeak=Math.random(), rec=null;   // steady light-leak placement while live; the recording in progress   // camera start-up: open straight into the viewfinder   // tap-to-meter offset, last render layout, level state
 
@@ -275,7 +275,7 @@ function draw(){
     }
     A=T(SRC.a,'prev');if(SRC.b)B=T(SRC.b,'prev');seed=SRC.seed;
   }
-  const r=resolve(useLive?liveSnap(seed):snap(seed)); let force=null;
+  const r=resolve(useLive||SRC.kind==='sample'?liveSnap(seed):snap(seed)); let force=null;
   if(S.mode==='booth'){force={ar:BOOTH_AR,land:true};r.frame='none';r.date=Object.assign({},r.date,{on:false});}
   if(useLive&&S.mode==='video'&&r.look.flick) r.p.exp+=(rnd()-0.5)*0.16*r.look.flick;   // projector flicker on cine looks
   try{lastR=E.render(view,A,B,r,{long:useLive?Math.min(prevLong(),960):prevLong(),ts:Date.now(),n:S.count+1,force});}catch(e){console.error(e);}
@@ -365,7 +365,8 @@ function ui(){
   $('#gridl').hidden=!S.grid; $('#lvl').hidden=!levelOn;
   press('#flashBtn',S.flash.on); press('#gridBtn',S.grid); press('#levelBtn',levelOn);
   press('#adjBtn',!!sheetName&&sheetName!=='more'); press('#moreBtn',sheetName==='more');
-  const ae=$('#aeBtn'); ae.hidden=!(tapEV&&live.on&&SRC.kind==='sample'&&!pair&&!booth.length); ae.textContent='Exposure '+(tapEV>0?'+':'')+tapEV.toFixed(1)+' \u00D7';
+  {const ae=$('#aeBtn'), t=evText(userEV); ae.hidden=!((tapEV||userEV)&&SRC.kind==='sample');
+   $('#aeTxt').textContent='EV '+t; ae.setAttribute('aria-label','Exposure '+t+' EV. Tap to reset.');}
   const sh=$('#shutter'); sh.classList.toggle('busy',busyN>0); sh.classList.toggle('video',S.mode==='video'); sh.classList.toggle('rec',!!rec);
   sh.setAttribute('aria-label',S.mode==='video'?(rec?'Stop recording':'Start recording'):'Take photo');
   press('#mPhoto',S.mode==='photo'); press('#mVideo',S.mode==='video'); press('#mBooth',S.mode==='booth');
@@ -533,13 +534,13 @@ async function doStartLive(quiet){
     live.stream=st; video.srcObject=st; try{await video.play();}catch(e){}
     const tr=st.getVideoTracks()[0];
     if(tr) tr.addEventListener('ended',()=>{if(live.stream!==st)return;dropLive();if(wantLive&&document.visibilityState==='visible')startLive(true);});
-    live.on=true; camOK=true; tapEV=0; if(SRC.kind==='held'&&S.mode!=='booth') SRC=sampleSrc();
-    if(!quiet) msg('Tap the picture to set focus and exposure.',3600);
+    live.on=true; camOK=true; tapEV=0; userEV=0; if(SRC.kind==='held'&&S.mode!=='booth') SRC=sampleSrc();
+    if(!S.hinted){S.hinted=true;saveSettings();msg('Tap to focus. Slide up or down to change exposure.',5200);}   // shown once, the first time the camera opens
     ui(); requestDraw(); return true;
   }catch(e){ return fail(); }
 }
 function dropLive(){
-  tapEV=0; $('#foc').hidden=true;
+  tapEV=0; userEV=0; $('#foc').hidden=true;
   if(live.stream) live.stream.getTracks().forEach(t=>t.stop());
   live.stream=null; live.on=false; video.srcObject=null; ui(); requestDraw();
 }
@@ -589,7 +590,8 @@ async function onShutter(){
 }
 
 /* ---------- tap to focus and meter, level ---------- */
-function liveSnap(seed){const r=snap(seed);if(live.on){r.lseed=liveLeak;if(tapEV)r.p.exp=clamp(r.p.exp+tapEV,-2.5,2.5);}return r;}
+const EV_GAIN=1/2.2;   // the picture is gamma-encoded, so one stop of light is 2^(1/2.2) on its values, not 2
+function liveSnap(seed){const r=snap(seed), e=tapEV+userEV*EV_GAIN;if(live.on)r.lseed=liveLeak;if(e)r.p.exp=clamp(r.p.exp+e,-2.5,2.5);return r;}
 
 /* ---------- video: records the filtered viewfinder exactly as shown ---------- */
 function pickMime(){
@@ -646,8 +648,33 @@ function meter(x,y){
     return Math.round(clamp(Math.log2(0.45/Math.max(mean,0.03))*0.7,-1.5,1.5)*10)/10;
   }catch(e){return 0;}
 }
-let focTimer=0;
-function showReticle(px,py){const f=$('#foc');f.hidden=true;void f.offsetWidth;f.style.left=px+'px';f.style.top=py+'px';f.hidden=false;clearTimeout(focTimer);focTimer=setTimeout(()=>{if(!tapEV)f.hidden=true;},1600);}
+/* focus box with an exposure slider beside it, as on a phone camera: tap to place it, slide up or down to brighten or darken */
+let focTimer=0, focAt=null, evDrag=null, evEnd=0;
+const evText=v=>(v>0?'+':v<0?'\u2212':'')+Math.abs(v).toFixed(1);
+function evPaint(){$('#foc').style.setProperty('--ev',userEV.toFixed(2));$('#evTxt').textContent=evText(userEV);}
+function holdReticle(){clearTimeout(focTimer);focTimer=setTimeout(()=>{if(!evDrag||!evDrag.on)$('#foc').hidden=true;},2600);}
+function showReticle(px,py){
+  const f=$('#foc'), b=view.getBoundingClientRect(); if(!b.width) return;
+  if(px==null){px=(focAt?focAt[0]:0.5)*b.width;py=(focAt?focAt[1]:0.5)*b.height;}   // no tap yet: the middle of the picture
+  else{f.hidden=true;void f.offsetWidth;}                                          // a fresh tap replays the box animation
+  focAt=[px/b.width,py/b.height];
+  f.style.left=px+'px'; f.style.top=py+'px'; f.classList.toggle('flip',px>b.width-96); f.hidden=false; evPaint(); holdReticle();
+}
+function setEV(v){v=Math.round(clamp(v,-2,2)*10)/10;if(v===userEV)return;userEV=v;evPaint();ui();requestDraw();}
+function evReady(){return SRC.kind==='sample'&&!busyN&&(liveReady()||!(booting||camOK));}
+function evStart(x,y){evDrag=evReady()?{x,y,ev:userEV,on:false}:null;}
+function evMove(x,y){
+  if(!evDrag) return false;
+  if(!evDrag.on){
+    const dx=x-evDrag.x, dy=y-evDrag.y; if(Math.abs(dy)<10||Math.abs(dy)<Math.abs(dx)) return false;
+    evDrag.on=true; evDrag.y=y; if($('#foc').hidden) showReticle(); clearTimeout(focTimer); $('#foc').classList.add('drag');
+  }
+  setEV(evDrag.ev-(y-evDrag.y)/80); return true;   // 80 px of travel per stop
+}
+function evStop(){
+  if(evDrag&&evDrag.on){evEnd=Date.now();$('#foc').classList.remove('drag');holdReticle();}
+  evDrag=null;
+}
 async function focusAt(x,y){
   let hw=false;
   try{
@@ -660,8 +687,7 @@ async function focusAt(x,y){
       }
     }
   }catch(e){hw=false;}
-  if(hw){tapEV=0;msg('Focus set on that point');}
-  else{tapEV=meter(x,y);msg('Exposure set on that point. Focus stays automatic in this browser.',4200);}
+  tapEV=hw?0:meter(x,y);   // where the browser cannot move the focus point, the tap still meters exposure there
   ui(); requestDraw();
 }
 let pinch=null, pinchEnd=0, zoomSave=0;
@@ -671,12 +697,12 @@ function setZoom(z){
   clearTimeout(zoomSave); zoomSave=setTimeout(saveSettings,400);
 }
 function onViewTap(ev){
-  if(busyN||running||pinch||Date.now()-pinchEnd<450) return;
-  if(!liveReady()||SRC.kind!=='sample'){if(!live.on)msg('Tap to focus works once the camera is on.',3200);return;}
-  const b=view.getBoundingClientRect(), L=lastR; if(!L||!b.width) return;
+  if(running||pinch||Date.now()-pinchEnd<450||Date.now()-evEnd<350||!evReady()) return;
+  const b=view.getBoundingClientRect(), L=lastR; if(!b.width) return;
+  userEV=0; showReticle(ev.clientX-b.left,ev.clientY-b.top);   // a new point starts from zero compensation, like the phone camera
+  if(!liveReady()||!L){tapEV=0;ui();requestDraw();return;}
   const cx=(ev.clientX-b.left)/b.width*view.width, cy=(ev.clientY-b.top)/b.height*view.height;
   const u=clamp((cx-L.m[0])/L.W,0,1), v=clamp((cy-L.m[1])/L.H,0,1);
-  showReticle(ev.clientX-b.left,ev.clientY-b.top);
   focusAt(clamp(u*L.c1[0]+L.c1[2],0,1),clamp(v*L.c1[1]+L.c1[3],0,1));
 }
 function onOri(e){
@@ -963,7 +989,7 @@ function boot(){
   $('#galImport').onclick=importPhotos;
   fileCam.addEventListener('change',()=>onFiles(fileCam,'camera'));
   fileLib.addEventListener('change',()=>onFiles(fileLib,'import'));
-  $('#flipBtn').onclick=async()=>{tapEV=0;S.facing=S.facing==='user'?'environment':'user';saveSettings();if(live.on){dropLive();await startLive();}msg(S.facing==='user'?'Front camera':'Back camera');};
+  $('#flipBtn').onclick=async()=>{tapEV=0;userEV=0;$('#foc').hidden=true;S.facing=S.facing==='user'?'environment':'user';saveSettings();if(live.on){dropLive();await startLive();}msg(S.facing==='user'?'Front camera':'Back camera');};
   $('#mPhoto').onclick=()=>setMode('photo'); $('#mVideo').onclick=()=>setMode('video'); $('#mBooth').onclick=()=>setMode('booth');
   $('#rollBtn').onclick=()=>{if(rec)stopRec();openGallery();}; $('#galBack').onclick=closeGallery; $('#detBack').onclick=()=>closeDetail();
   $('#tabAll').onclick=()=>{galTab='all';renderGallery();}; $('#tabFav').onclick=()=>{galTab='fav';renderGallery();};
@@ -976,12 +1002,21 @@ function boot(){
   $('#closePhoto').onclick=()=>{pair=null;booth=[];SRC=sampleSrc();ui();requestDraw();};
   $('#gridBtn').onclick=()=>{S.grid=!S.grid;changed(true);};
   $('#levelBtn').onclick=()=>setLevel(!levelOn);
-  $('#aeBtn').onclick=()=>{tapEV=0;$('#foc').hidden=true;ui();requestDraw();msg('Exposure point cleared');};
+  $('#aeBtn').onclick=()=>{tapEV=0;userEV=0;$('#foc').hidden=true;ui();requestDraw();};
   view.addEventListener('click',onViewTap);
   const tdist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
-  stage.addEventListener('touchstart',e=>{if(e.touches.length===2){pinch={d:Math.max(1,tdist(e.touches)),z:S.zoom};e.preventDefault();}},{passive:false});
-  stage.addEventListener('touchmove',e=>{if(pinch&&e.touches.length===2){e.preventDefault();setZoom(pinch.z*tdist(e.touches)/pinch.d);}},{passive:false});
-  const endPinch=e=>{if(pinch&&e.touches.length<2){pinch=null;pinchEnd=Date.now();}};
+  stage.addEventListener('touchstart',e=>{
+    if(e.touches.length===2){evStop();pinch={d:Math.max(1,tdist(e.touches)),z:S.zoom};e.preventDefault();}
+    else if(e.touches.length===1) evStart(e.touches[0].clientX,e.touches[0].clientY);
+  },{passive:false});
+  stage.addEventListener('touchmove',e=>{
+    if(pinch&&e.touches.length===2){e.preventDefault();setZoom(pinch.z*tdist(e.touches)/pinch.d);}
+    else if(!pinch&&e.touches.length===1&&evMove(e.touches[0].clientX,e.touches[0].clientY)) e.preventDefault();
+  },{passive:false});
+  const endPinch=e=>{if(pinch&&e.touches.length<2){pinch=null;pinchEnd=Date.now();}if(!e.touches.length)evStop();};
+  stage.addEventListener('mousedown',e=>{if(e.button===0)evStart(e.clientX,e.clientY);});
+  window.addEventListener('mousemove',e=>{if(evDrag)evMove(e.clientX,e.clientY);});
+  window.addEventListener('mouseup',evStop);
   stage.addEventListener('touchend',endPinch); stage.addEventListener('touchcancel',endPinch);
   document.addEventListener('gesturestart',e=>e.preventDefault());
   document.addEventListener('keydown',e=>{
