@@ -284,7 +284,7 @@ const GC_Engine = (function(){
 
   /* ---------- frames ---------- */
   function rr(ctx,x,y,w,h,r){ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
-  const FONT_LCD='"VT323","Courier New",monospace', FONT_UI='Archivo,"Helvetica Neue",Arial,sans-serif';
+  const FONT_LCD='"VT323","Courier New",monospace', FONT_UI='-apple-system,"SF Pro Text","Helvetica Neue",Arial,sans-serif';
   function osd(ctx,txt,x,y,size,align){
     ctx.save(); ctx.font=size+'px '+FONT_LCD; ctx.textAlign=align||'left'; ctx.textBaseline='top';
     ctx.fillStyle='rgba(0,0,0,.75)'; const o=Math.max(1,size*0.07); ctx.fillText(txt,x+o,y+o);

@@ -283,14 +283,6 @@ function say(t,ms){if(!$('#gal').hidden||!$('#det').hidden)toast(t,ms);else msg(
 /* ---------- UI refresh ---------- */
 function labTweaked(){const d=lookDefaults(look());return LAB.some(a=>Math.abs(S.p[a[0]]-d[a[0]])>1e-6);}
 const GROUPS={'FILM':'Film','FUJI':'Fuji','DIGITAL':'Digital','TAPE & CINE':'Tape and cine','DROPS':'Drops'};
-function accentOf(l){                       // the interface takes its one accent from the selected film
-  let best=null,bs=-9;
-  l.sw.forEach(h=>{const c=[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)),mx=Math.max(c[0],c[1],c[2]),mn=Math.min(c[0],c[1],c[2]);
-    const lum=(0.299*c[0]+0.587*c[1]+0.114*c[2])/255,sc=(lum<0.32?-1:0)+(mx?(mx-mn)/mx:0)*0.6+lum*0.4;if(sc>bs){bs=sc;best={c,lum};}});
-  let c=best.c,lum=best.lum;
-  if(lum<0.45){const k=0.45/Math.max(lum,0.06);c=c.map(v=>Math.min(255,Math.round(v*k+24)));lum=(0.299*c[0]+0.587*c[1]+0.114*c[2])/255;}
-  return {bg:'rgb('+c.join(',')+')',on:lum>0.5?'#000':'#fff'};
-}
 function ctxText(){
   if(SRC.kind==='result') return 'Strip saved';
   if(SRC.kind==='photo') return SRC.saved?'Saved photo':'Photo, not saved';
@@ -307,10 +299,12 @@ function ctxText(){
 }
 const press=(id,on)=>{const b=$(id);b.classList.toggle('on',!!on);b.setAttribute('aria-pressed',on?'true':'false');};
 function ui(){
-  const ac=accentOf(look()), app=$('#app');
-  app.style.setProperty('--accent',ac.bg); app.style.setProperty('--on-accent',ac.on);
   $('#osdSrc').textContent=ctxText();
-  $('#zoomc').hidden=SRC.kind==='result'; $('#zoomVal').textContent=S.zoom.toFixed(1)+'\u00D7'; $('#zoomOut').disabled=S.zoom<=1; $('#zoomIn').disabled=S.zoom>=5;
+  $('#zoomc').hidden=SRC.kind==='result';
+  {const zs=[...document.querySelectorAll('#zoomc button')]; let cur=zs[0];
+   zs.forEach(b=>{if(+b.dataset.z<=S.zoom+1e-6)cur=b;});
+   zs.forEach(b=>{const on=b===cur,z=+b.dataset.z;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');
+     b.textContent=on?(Math.abs(S.zoom-z)<0.05?String(z):S.zoom.toFixed(1))+'\u00D7':String(z);});}
   if(!msgText) setMsg(hint());
   $('#saveLook').hidden=!(SRC.kind==='photo'&&!SRC.saved&&S.mode==='photo'&&!busyN);
   $('#closePhoto').hidden=!(SRC.kind!=='sample'||pair||booth.length);
@@ -437,8 +431,8 @@ function boothCompose(items,rcp){
   });
   const d=new Date(), fy=H-foot/2;
   x.fillStyle=ink; x.textBaseline='middle'; x.textAlign='left';
-  x.font='700 '+(grid?28:26)+'px Archivo,"Helvetica Neue",Arial,sans-serif'; x.fillText('Grain Club',m,fy-14);
-  x.font='500 '+(grid?22:20)+'px Archivo,"Helvetica Neue",Arial,sans-serif';
+  x.font='700 '+(grid?28:26)+'px -apple-system,"SF Pro Display","Helvetica Neue",Arial,sans-serif'; x.fillText('Grain Club',m,fy-14);
+  x.font='500 '+(grid?22:20)+'px -apple-system,"SF Pro Text","Helvetica Neue",Arial,sans-serif';
   x.fillText('Photobooth, '+(LOOK[rcp.look]||LOOKS[0]).name,m,fy+22);
   x.textAlign='right'; x.font=(grid?40:36)+'px "VT323","Courier New",monospace';
   x.fillText(p2(d.getDate())+'.'+p2(d.getMonth()+1)+'.'+d.getFullYear(),W-m,fy);
@@ -651,7 +645,8 @@ function slider(id,label,min,max,step,val,fmt,on){
   return el('div',{class:'sl'},el('label',{class:'lab',for:id,text:label}),out,inp);
 }
 function chips(id,label,opts,val,on){
-  const wrap=el('div',{class:'chips',role:'group','aria-label':label});
+  const seg=opts.length<=5&&!opts.some(o=>o[2])&&opts.reduce((n,o)=>n+String(o[1]).length,0)<=24;
+  const wrap=el('div',{class:'chips'+(seg?' seg':''),role:'group','aria-label':label});
   opts.forEach(o=>{
     const b=el('button',{type:'button',class:'chip'+(o[0]===val?' on':''),'aria-pressed':o[0]===val?'true':'false'});
     if(o[2]){const d=el('span',{class:'dot'});d.style.background=o[2];b.append(d);}
@@ -661,7 +656,12 @@ function chips(id,label,opts,val,on){
   });
   return el('div',{class:'grp',id},el('span',{class:'lab',text:label}),wrap);
 }
-const onoff=(id,label,val,on)=>chips(id,label,[[true,'On'],[false,'Off']],!!val,on);
+function onoff(id,label,val,on){
+  let v=!!val;
+  const sw=el('button',{type:'button',class:'switch',role:'switch','aria-checked':v?'true':'false','aria-label':label});
+  sw.onclick=()=>{v=!v;sw.setAttribute('aria-checked',v?'true':'false');on(v);};
+  return el('div',{class:'row',id},el('span',{text:label}),sw);
+}
 const note=t=>el('p',{class:'note',text:t});
 function copyText(text,area){
   const fall=()=>{if(area){area.hidden=false;area.value=text;area.focus();area.select();}msg('Code shown below. Copy it from the box.',4000);};
@@ -693,11 +693,11 @@ const SHEETS={
   date:{title:'Date stamp',build(b){
     const now=new Date();
     const cust=el('input',{type:'date',id:'dtCustom',class:'field',value:S.date.custom,'aria-label':'Custom date'});
-    cust.addEventListener('change',()=>{S.date.custom=/^\d{4}-\d{2}-\d{2}$/.test(cust.value)?cust.value:'';S.date.on=true;changed();});
+    cust.addEventListener('change',()=>{S.date.custom=/^\d{4}-\d{2}-\d{2}$/.test(cust.value)?cust.value:'';S.date.on=true;changed();openSheet('date');});
     b.append(onoff('dtOn','Stamp the date',S.date.on,v=>{S.date.on=v;changed();}),
-      chips('dtStyle','Style',[['seg','Film LED'],['vhs','Camcorder']],S.date.style,v=>{S.date.style=v;S.date.on=true;changed();}),
-      chips('dtCol','Colour',[['amber','Amber','#ff9d1c'],['red','Red','#ff4a2a'],['green','Green','#74ff86'],['white','White','#f7f5ee']],S.date.color,v=>{S.date.color=v;S.date.on=true;changed();}),
-      chips('dtFmt','Format (Film LED)',E.DATE_FORMATS.map((f,i)=>[i,f]),S.date.fmt,v=>{S.date.fmt=v;S.date.on=true;changed();}),
+      chips('dtStyle','Style',[['seg','Film LED'],['vhs','Camcorder']],S.date.style,v=>{S.date.style=v;S.date.on=true;changed();openSheet('date');}),
+      chips('dtCol','Colour',[['amber','Amber','#ff9d1c'],['red','Red','#ff4a2a'],['green','Green','#74ff86'],['white','White','#f7f5ee']],S.date.color,v=>{S.date.color=v;S.date.on=true;changed();openSheet('date');}),
+      chips('dtFmt','Format (Film LED)',E.DATE_FORMATS.map((f,i)=>[i,f]),S.date.fmt,v=>{S.date.fmt=v;S.date.on=true;changed();openSheet('date');}),
       chips('dtPos','Corner',[['br','Bottom right'],['bl','Bottom left']],S.date.pos,v=>{S.date.pos=v;changed();}),
       el('div',{class:'grp'},el('label',{class:'lab',for:'dtCustom',text:'Custom date'}),cust,
         el('div',{class:'btnrow'},
@@ -731,8 +731,9 @@ const SHEETS={
       note('On a film roll you cannot see your photos until the roll is finished and developed. Imports are never hidden.'),
       sec('Photos'),
       el('div',{class:'btnrow'},el('button',{type:'button',class:'btn lite',text:'Import photos',onclick:importPhotos})),
-      onoff('mKeep','Keep clean originals',S.keep,v=>{S.keep=v;changed(true);}),
-      onoff('mSound','Shutter sound',S.sound,v=>{S.sound=v;changed(true);}),
+      el('div',{class:'group'},
+        onoff('mKeep','Keep clean originals',S.keep,v=>{S.keep=v;changed(true);}),
+        onoff('mSound','Shutter sound',S.sound,v=>{S.sound=v;changed(true);})),
       note('Your photos are stored in this browser on this device only. Save the ones you want to keep to your Photos.'),
       sec('Recipes'),
       el('div',{class:'grp'},el('label',{class:'lab',for:'rcName',text:'Save the current look as a recipe'}),name,
@@ -859,6 +860,7 @@ function setMode(m){
 }
 function boot(){
   if(!E){setMsg('This browser has graphics acceleration off, so photos cannot be developed here.');return;}
+  [1,2,3,5].forEach(z=>$('#zoomc').append(el('button',{type:'button','data-z':z,'aria-label':'Zoom '+z+' times','aria-pressed':'false',text:String(z),onclick:()=>setZoom(z)})));
   loadSettings(); buildCams(); ui(); centerCam();
   $('#shutter').onclick=onShutter;
   $('#galImport').onclick=importPhotos;
@@ -878,9 +880,6 @@ function boot(){
   $('#levelBtn').onclick=()=>setLevel(!levelOn);
   $('#aeBtn').onclick=()=>{tapEV=0;$('#foc').hidden=true;ui();requestDraw();msg('Exposure point cleared');};
   view.addEventListener('click',onViewTap);
-  $('#zoomOut').onclick=()=>setZoom(Math.ceil(S.zoom*2-1e-6)/2-0.5);
-  $('#zoomIn').onclick=()=>setZoom(Math.floor(S.zoom*2+1e-6)/2+0.5);
-  $('#zoomVal').onclick=()=>setZoom(1);
   const tdist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
   stage.addEventListener('touchstart',e=>{if(e.touches.length===2){pinch={d:Math.max(1,tdist(e.touches)),z:S.zoom};e.preventDefault();}},{passive:false});
   stage.addEventListener('touchmove',e=>{if(pinch&&e.touches.length===2){e.preventDefault();setZoom(pinch.z*tdist(e.touches)/pinch.d);}},{passive:false});
@@ -899,7 +898,7 @@ function boot(){
     if(live.on&&tr&&tr.readyState!=='ended'){if(video.paused)video.play().catch(()=>{});return;}
     if(live.on)dropLive(); startLive(true);
   });
-  if(document.fonts&&document.fonts.load){Promise.all([document.fonts.load('20px VT323'),document.fonts.load('600 20px Archivo')]).then(()=>{requestDraw();centerCam();},()=>{});}
+  if(document.fonts&&document.fonts.load){Promise.all([document.fonts.load('20px VT323')]).then(()=>{requestDraw();centerCam();},()=>{});}
   DB.open().then(()=>DB.all()).then(all=>{shots=(all||[]).filter(s=>s&&s.id&&s.thumb).sort((a,b)=>b.ts-a.ts);ui();});
   startLive(true).then(ok=>{booting=false;if(!ok)wantLive=false;ui();requestDraw();});
   requestAnimationFrame(loop);
