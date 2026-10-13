@@ -1,0 +1,40 @@
+# Xcode project description. The cloud build turns this into GrainClub.xcodeproj with XcodeGen.
+name: GrainClub
+options:
+  bundleIdPrefix: club.grain
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGNING_ALLOWED: "NO"
+    CODE_SIGNING_REQUIRED: "NO"
+    CODE_SIGN_IDENTITY: ""
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+targets:
+  GrainClub:
+    type: application
+    platform: iOS
+    sources: [GrainClub]
+    scheme: {}
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: club.grain.camera
+        GENERATE_INFOPLIST_FILE: "NO"
+    info:
+      path: GrainClub/Info.plist
+      properties:
+        CFBundleDisplayName: Grain Club
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSRequiresIPhoneOS: true
+        UILaunchScreen: {}
+        UIRequiresFullScreen: true
+        UIStatusBarHidden: true
+        UIViewControllerBasedStatusBarAppearance: false
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        NSCameraUsageDescription: Grain Club uses the camera to take photos through its film looks.
+        NSPhotoLibraryAddUsageDescription: Grain Club saves the photos you take to your Photos library.

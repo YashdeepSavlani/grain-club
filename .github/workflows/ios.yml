@@ -1,0 +1,56 @@
+# Builds the iPhone app on a GitHub Mac and publishes GrainClub.ipa as the "ios-latest" release.
+# The app is unsigned; Sideloadly signs it with your Apple ID when you install it.
+name: iPhone app
+on:
+  push:
+    branches: [main, ios]
+    paths: ['ios/**', 'src/app.js', 'tools/export_looks.js', '.github/workflows/ios.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy the looks from the web app
+        run: node tools/export_looks.js
+      - name: Generate the Xcode project
+        run: |
+          brew install xcodegen
+          cd ios && xcodegen generate
+      - name: Build
+        run: |
+          cd ios
+          xcodebuild -version | tee build.log
+          set +e
+          xcodebuild -project GrainClub.xcodeproj -scheme GrainClub -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build >> build.log 2>&1
+          status=$?
+          grep -E ': (error|fatal error):' build.log | sort -u | head -60 | while IFS= read -r line; do echo "::error::$line"; done
+          tail -5 build.log
+          exit $status
+      - name: Package GrainClub.ipa
+        run: |
+          cd ios
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/GrainClub.app Payload/
+          zip -qry GrainClub.ipa Payload
+          ls -la GrainClub.ipa
+      - name: Publish the app file
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete ios-latest --yes --cleanup-tag || true
+          gh release create ios-latest ios/GrainClub.ipa --prerelease --target "$GITHUB_SHA" \
+            --title "Grain Club for iPhone (test build)" \
+            --notes "Built from ${GITHUB_SHA::7} on ${GITHUB_REF_NAME}. Install with Sideloadly; it is signed with your own Apple ID during install."
+      - name: Save the build log
+        if: always()
+        run: |
+          mkdir -p /tmp/ci && cp ios/build.log /tmp/ci/build.log 2>/dev/null || echo "no log" > /tmp/ci/build.log
+          echo "${GITHUB_SHA} ${{ job.status }}" > /tmp/ci/result.txt
+          cd /tmp/ci && git init -q && git checkout -q -b ci-logs && git add -A
+          git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "build log for ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-logs

@@ -1,4 +1,4 @@
-"""Draw the home-screen icons into site/. Run: python3 tools/make_icons.py"""
+"""Draw the home-screen icons into site/ and the iPhone app icon. Run: python3 tools/make_icons.py"""
 import pathlib, random
 from PIL import Image, ImageDraw, ImageFilter
 out = pathlib.Path(__file__).resolve().parent.parent / "site"
@@ -34,4 +34,7 @@ def icon():
 big = icon()
 for n in (180, 192, 512):
     big.resize((n, n), Image.LANCZOS).save(out / f"icon-{n}.png", optimize=True)
+ios = out.parent / "ios/GrainClub/Assets.xcassets/AppIcon.appiconset"
+if ios.is_dir():
+    big.save(ios / "icon-1024.png", optimize=True)
 print("icons written to", out)
