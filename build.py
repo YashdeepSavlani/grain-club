@@ -18,6 +18,9 @@ page = f"""<!doctype html>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Grain Club">
 <meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 {link}
@@ -27,6 +30,9 @@ page = f"""<!doctype html>
 {rest}
 <script>
 {js}
+</script>
+<script>
+if('serviceWorker' in navigator&&location.protocol==='https:'||location.hostname==='localhost')navigator.serviceWorker&&navigator.serviceWorker.register('sw.js').catch(function(){{}});
 </script>
 </body>
 </html>
