@@ -11,13 +11,15 @@ uniform float uExp,uTemp,uTint,uCon,uSat,uFade,uMono;
 uniform vec3 uLift,uGamma,uGain,uShT,uHiT,uMonoTint;
 uniform mat3 uMat;
 uniform float uGrain,uGsize,uChroma,uDust,uLeak,uHal,uBloom,uVig,uCA,uSplit,uSharp,uScan,uVhs;
-uniform float uFish,uPrism,uStar,uKal,uFlash,uFlashTint;
+uniform float uFish,uPrism,uStar,uKal,uFlash,uFlashTint,uHeart,uHN;
 uniform vec3 uFlashCol;
 
 float h12(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
 vec2 mir(vec2 u){return 1.0-abs(1.0-mod(u,2.0));}
 float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
   return mix(mix(h12(i),h12(i+vec2(1.,0.)),f.x),mix(h12(i+vec2(0.,1.)),h12(i+vec2(1.,1.)),f.x),f.y);}
+
+float hl(vec3 s){float m=max(max(s.r,s.g),s.b);return m*smoothstep(0.86,1.0,m);}   // how much a pixel counts as a light source
 
 vec3 src(vec2 u){
   u=mir(u);
@@ -113,6 +115,23 @@ void main(){
       }
     }
     c+=sb*0.13*(0.4+uStar);
+  }
+
+  if(uHeart>0.0){
+    /* heart diffraction lens: every bright light is spread along a heart outline, red on the outside through violet on the inside */
+    vec3 hb=vec3(0.0);
+    float jit=h12(gl_FragCoord.xy*1.37+uSeed*29.0);
+    float R=0.028+0.05*uHeart, stp=6.2831853/uHN;
+    for(int i=0;i<96;i++){
+      if(float(i)>=uHN) break;
+      float t=(float(i)+jit)*stp, s=sin(t);
+      vec2 k=vec2(16.0*s*s*s, 13.0*cos(t)-5.0*cos(2.0*t)-2.0*cos(3.0*t)-cos(4.0*t)+2.5)/17.0;
+      float w=length(vec2(48.0*s*s*cos(t),-13.0*s+10.0*sin(2.0*t)+6.0*sin(3.0*t)+4.0*sin(4.0*t)))/16.26;   // even brightness: samples bunch up at the point and the dip
+      k.x/=asp; k*=R;
+      hb+=(vec3(1.0,0.1,0.0)*hl(src(q-k*1.2))+vec3(0.75,0.9,0.0)*hl(src(q-k*1.07))
+          +vec3(0.0,0.75,0.85)*hl(src(q-k*0.94))+vec3(0.5,0.05,1.0)*hl(src(q-k*0.81)))*w;
+    }
+    c+=hb*(28.0/uHN)*0.3*(0.45+uHeart);
   }
 
   c*=pow(2.0,uExp);
@@ -271,7 +290,7 @@ const GC_Engine = (function(){
     v3('uLift',p.lift);v3('uGamma',p.gamma);v3('uGain',p.gain);v3('uShT',p.shT);v3('uHiT',p.hiT);v3('uMonoTint',p.monoTint);
     f('uGrain',p.grain);f('uGsize',p.gsize);f('uChroma',p.chroma);f('uDust',p.dust);f('uLeak',p.leak);f('uHal',p.hal);f('uBloom',p.bloom);
     f('uVig',p.vig);f('uCA',p.ca);f('uSplit',(p.split||0)+(lens.split||0));f('uSharp',p.sharp);f('uScan',p.scan);f('uVhs',p.vhs);
-    f('uFish',(p.fish||0)+(lens.fish||0));f('uPrism',lens.prism||0);f('uStar',lens.star||0);f('uKal',lens.kal||0);
+    f('uFish',(p.fish||0)+(lens.fish||0));f('uPrism',lens.prism||0);f('uStar',lens.star||0);f('uHeart',(p.heart||0)+(lens.heart||0));f('uHN',A.video?28.0:72.0);f('uKal',lens.kal||0);
     const fc=GC_FLASH[r.flash.col]||GC_FLASH.white;
     f('uFlash',r.flash.on?1:0); f('uFlashTint',r.flash.col&&r.flash.col!=='white'?1:0); v3('uFlashCol',fc);
     gl.drawArrays(gl.TRIANGLES,0,3);

@@ -114,7 +114,9 @@ const LOOKS=[
  {id:'grunge',name:'Soft Grunge',tag:'Drop 07',group:'DROPS',ar:1.5,sw:['#8f9a8a','#5d6470','#2a2c2e'],
   p:{sat:.6,con:1.05,fade:.14,shT:[0,.02,.03],temp:-.05,grain:.35,gsize:1.8,vig:.5,dust:.4}},
  {id:'cyber',name:'Cyberpunk Night',tag:'Drop 08',group:'DROPS',ar:16/9,sw:['#00e5ff','#ff2bd6','#1a0b3a'],
-  p:{split:.004,shT:[.03,0,.1],hiT:[0,.08,.1],con:1.3,sat:1.35,temp:-.2,tint:.15,bloom:.5,hal:.3,scan:.2,vig:.4,ca:.5}}
+  p:{split:.004,shT:[.03,0,.1],hiT:[0,.08,.1],con:1.3,sat:1.35,temp:-.2,tint:.15,bloom:.5,hal:.3,scan:.2,vig:.4,ca:.5}},
+ {id:'love',name:'Love Lens',tag:'Drop 09',group:'DROPS',ar:1.5,sw:['#ff5f9e','#ffd36b','#6fd3ff'],
+  p:{heart:.7,bloom:.35,hal:.25,sat:1.1,con:1.05,temp:.04,tint:.04,fade:.04,grain:.18,vig:.3}}
 ];
 const LOOK={}; LOOKS.forEach(l=>LOOK[l.id]=l);
 const LAB=[
@@ -135,14 +137,14 @@ const LAB=[
 ];
 const LABG=[['Tone',['exp','con','sat','temp','tint','fade']],['Texture',['grain','gsize','dust','leak']],['Glow and optics',['hal','bloom','vig','ca']]];
 const ORIGIN={exp:0,temp:0,tint:0,con:1,sat:1};   // sliders that move both ways fill from their neutral point
-const NOLENS={fish:0,prism:0,star:0,split:0,kal:0,dbl:false};
-const LENS=[['fish','Fisheye',0,2.5,.05],['prism','Prism',0,1,.01],['star','Starburst',0,1,.01],['split','RGB split',0,.03,.0005]];
+const NOLENS={fish:0,prism:0,star:0,heart:0,split:0,kal:0,dbl:false};
+const LENS=[['fish','Fisheye',0,2.5,.05],['prism','Prism',0,1,.01],['star','Starburst',0,1,.01],['heart','Hearts',0,1,.01],['split','RGB split',0,.03,.0005]];
 const FLASHES=[['white','White','#ffffff'],['amber','Amber','#ffa53a'],['red','Red','#ff3a2c'],['pink','Pink','#ff5fb4'],['violet','Violet','#9d62ff'],['blue','Blue','#3f80ff'],['green','Green','#4dff73']];
 const CHALLENGES=['Shoot with flash in full daylight.','One colour only. Fill the frame with it.','Capture something older than you.','A stranger\'s hands.','Find a reflection and shoot into it.','Three photos from knee height.','Something lit only by a screen or a sign.','A double exposure of a face and a texture.','Shoot the same corner at two different times.','Only shadows today.','A photo with nothing in the centre.','Make a half-frame pair that tells a tiny story.','Your street in black and white.','The last light of the day.'];
 const BOOTH_AR=1.25;
 
 /* ---------- state ---------- */
-const S={mode:'photo',lookId:'ccd2000',p:{},lens:{fish:0,prism:0,star:0,split:0,kal:0,dbl:false},flash:{on:false,col:'white'},
+const S={mode:'photo',lookId:'ccd2000',p:{},lens:{fish:0,prism:0,star:0,heart:0,split:0,kal:0,dbl:false},flash:{on:false,col:'white'},
   date:{on:false,style:'seg',color:'amber',fmt:0,custom:'',pos:'br'},frame:'none',zoom:1,timer:0,grid:false,sound:true,keep:true,
   rollSize:0,roll:null,booth:{n:4,layout:'strip',paper:'white',story:false},facing:'environment',recipes:[],count:0,vsound:false};
 const look=()=>LOOK[S.lookId]||LOOKS[0];
@@ -1009,7 +1011,7 @@ async function openDetail(id){
   $('#detTitle').textContent=m.name;
   const d=new Date(m.ts), r=m.rcp||{}, bits=[];
   if(r.flash&&r.flash.on)bits.push('flash'+(r.flash.col!=='white'?' '+r.flash.col:''));
-  if(r.lens){if(r.lens.dbl&&m.kind==='photo')bits.push('double');if(r.lens.fish>0)bits.push('fisheye');if(r.lens.prism>0)bits.push('prism');if(r.lens.star>0)bits.push('starburst');if(r.lens.kal>0)bits.push('kaleido');}
+  if(r.lens){if(r.lens.dbl&&m.kind==='photo')bits.push('double');if(r.lens.fish>0)bits.push('fisheye');if(r.lens.prism>0)bits.push('prism');if(r.lens.star>0)bits.push('starburst');if(r.lens.heart>0)bits.push('hearts');if(r.lens.kal>0)bits.push('kaleido');}
   const info=$('#detInfo'); info.textContent='';
   info.append(el('div',{text:fmtDay(m.ts)+' \u00B7 '+p2(d.getHours())+':'+p2(d.getMinutes())}),el('div',{text:m.w+' \u00D7 '+m.h+(isVid?' \u00B7 '+durText(m.dur||0)+' video':'')+(bits.length?' \u00B7 '+bits.join(' \u00B7 '):'')}));
   const act=$('#detAct'); act.textContent='';
