@@ -238,7 +238,18 @@ textarea.field{font-family:var(--f-mono);font-size:12px;min-height:68px;resize:n
 .navb.end{justify-self:end;gap:5px;padding:0 10px}
 .navb .ic{--ic:20px;stroke-width:2.1}
 .eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-2)}
-.ghead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:2px 16px 12px;flex:none}
+.ghead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:2px 16px 12px;flex:none}
+.ghead>div{min-width:0}
+.ghead .count{margin-top:6px}
+.selbtn{position:relative;flex:none;min-height:34px;padding:0 15px;margin-bottom:2px;border-radius:var(--r-pill);background:var(--fill);font-size:14px;font-weight:600;color:var(--text)}
+.selbtn::after{content:"";position:absolute;inset:-5px -2px}
+.selbar{display:flex;align-items:center;gap:8px;padding:10px 12px 12px;background:var(--surface-1);box-shadow:inset 0 1px 0 var(--hairline);flex:none;animation:sheetUp var(--t-enter) var(--ease-out)}
+.selbar .grow{flex:1}
+.selbar .btn{padding:0 16px}
+.selbar .btn .ic{--ic:18px}
+.selbar .navb{padding:0 8px}
+.btn.lite.danger{color:var(--danger)}
+.btn.lite.danger.warn{background:var(--danger-soft);font-weight:600}
 .large{margin:0;font-size:34px;line-height:1.1;font-weight:700;letter-spacing:-.015em}
 .count{margin:0;font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);font-variant-numeric:tabular-nums}
 .gtabs{margin:0 16px 12px;flex:none}
@@ -254,6 +265,12 @@ textarea.field{font-family:var(--f-mono);font-size:12px;min-height:68px;resize:n
 .gridp button.fav::after{content:"";position:absolute;right:7px;top:7px;width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px rgba(0,0,0,.55)}
 .gridp button.vid::before{content:"\25B8  " attr(data-dur);position:absolute;left:6px;bottom:6px;padding:2px 7px;border-radius:9px;background:rgba(0,0,0,.65);color:#fff;font-family:var(--f-mono);font-size:11px;font-weight:600;line-height:1.4;font-variant-numeric:tabular-nums}
 .gridp.reveal button{animation:dev 1.4s ease-out}
+.gridp .ck{display:none;position:absolute;right:6px;bottom:6px;width:24px;height:24px;place-items:center;border-radius:50%;border:1.5px solid #fff;background:rgba(0,0,0,.28);box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.gridp .ck .ic{--ic:14px;stroke-width:3;color:var(--on-accent);opacity:0}
+.gridp button.pick .ck{display:grid}
+.gridp button.sel{box-shadow:inset 0 0 0 3px var(--accent)}
+.gridp button.sel .ck{background:var(--accent);border-color:var(--accent)}
+.gridp button.sel .ck .ic{opacity:1}
 @keyframes dev{0%{filter:brightness(0) sepia(1)}60%{filter:brightness(.6) sepia(.6)}100%{filter:none}}
 .empty{margin:auto;display:flex;flex-direction:column;align-items:center;gap:var(--s3);text-align:center;color:var(--text-2);font-size:16px;line-height:1.4;max-width:28ch}
 .empty .ic{--ic:34px;stroke-width:1.4;color:var(--text-3)}
@@ -311,6 +328,7 @@ textarea.field{font-family:var(--f-mono);font-size:12px;min-height:68px;resize:n
   <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
   <symbol id="i-down" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
   <symbol id="i-heart" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></symbol>
@@ -378,12 +396,18 @@ textarea.field{font-family:var(--f-mono);font-size:12px;min-height:68px;resize:n
       <span class="eyebrow" aria-hidden="true">Grain Club</span>
       <button type="button" class="navb end" id="galImport"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Import</button>
     </header>
-    <div class="ghead"><h1 class="large">Roll</h1><p class="count" id="galCount"></p></div>
+    <div class="ghead"><div><h1 class="large" id="galTitle">Roll</h1><p class="count" id="galCount"></p></div><button type="button" class="selbtn" id="selBtn">Select</button></div>
     <div class="gtabs" role="group" aria-label="Filter">
       <button type="button" class="tab on" id="tabAll" aria-pressed="true">All</button>
       <button type="button" class="tab" id="tabFav" aria-pressed="false">Favourites</button>
     </div>
     <div class="gbody" id="galBody"></div>
+    <div class="selbar" id="selBar" hidden>
+      <button type="button" class="navb" id="selAll">Select all</button>
+      <span class="grow"></span>
+      <button type="button" class="btn lite danger" id="selDel"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg><span>Delete</span></button>
+      <button type="button" class="btn" id="selSave"><svg class="ic" aria-hidden="true"><use href="#i-down"/></svg><span id="selSaveTxt">Save</span></button>
+    </div>
   </section>
 
   <section class="over" id="det" hidden aria-label="Photo">
@@ -1695,18 +1719,19 @@ function importPhotos(){if(busyN||running)return;if(SRC.kind==='result')SRC=samp
 
 /* ---------- roll (gallery) and photo view ---------- */
 let galTab='all', detId=null, detUrl=null, reveal=false, detTok=0;
+let selMode=false, selVis=[], delArm=0; const sel=new Set(), selFiles=new Map();   // multiple selection in the roll
 function fmtDay(ts){try{return new Date(ts).toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',year:'numeric'});}catch(e){return new Date(ts).toDateString();}}
 function renderGallery(){
-  const body=$('#galBody'); body.textContent='';
+  const body=$('#galBody'); body.textContent=''; selVis=[];
   $('#tabAll').classList.toggle('on',galTab==='all'); $('#tabAll').setAttribute('aria-pressed',galTab==='all');
   $('#tabFav').classList.toggle('on',galTab==='fav'); $('#tabFav').setAttribute('aria-pressed',galTab==='fav');
-  body.append(el('div',{class:'card'},el('p',null,el('span',{class:'k',text:"Today's challenge"}),CHALLENGES[Math.floor(Date.now()/864e5)%CHALLENGES.length])));
+  if(!selMode) body.append(el('div',{class:'card'},el('p',null,el('span',{class:'k',text:"Today's challenge"}),CHALLENGES[Math.floor(Date.now()/864e5)%CHALLENGES.length])));
   if(DB.volatile) body.append(el('div',{class:'card'},el('p',null,el('span',{class:'k',text:'Not stored'}),'This browser is not letting the app keep photos between visits. Save the ones you want before you close this page.')));
   const rolls=new Map(); shots.forEach(s=>{if(s.hidden&&s.roll){rolls.set(s.roll,(rolls.get(s.roll)||0)+1);}});
-  rolls.forEach((n,id)=>{
+  if(!selMode) rolls.forEach((n,id)=>{
     const active=S.roll&&S.roll.id===id;
     body.append(el('div',{class:'card'},el('p',null,el('span',{class:'k',text:'Undeveloped roll'}),n+(active?' of '+S.roll.size:'')+' frames exposed. '+(active?'Finish the roll, or develop it early.':'Ready to develop.')),
-      el('button',{type:'button',class:'pill go',text:active?'Develop early':'Develop',onclick:()=>developRoll(id)})));
+      el('button',{type:'button',class:'btn',text:active?'Develop early':'Develop',onclick:()=>developRoll(id)})));
   });
   {const all=shots.filter(s=>!s.hidden), nv=all.filter(s=>s.kind==='video').length, np=all.length-nv;
    $('#galCount').textContent=all.length?np+(np===1?' frame':' frames')+(nv?' \u00B7 '+nv+(nv===1?' video':' videos'):''):'';}
@@ -1717,16 +1742,88 @@ function renderGallery(){
       el('b',{text:fav?'No favourites yet':held?'Still on the roll':'No photos yet'}),
       el('span',{text:fav?'Open a photo and tap Favourite to keep it here.':held?'Finish the roll, or develop it early, to see your photos.':'Everything you shoot is developed and collected here.'}),
       fav||held?null:el('button',{type:'button',class:'btn',text:'Open the camera',onclick:closeGallery})));
-    return;
+    selUI(); return;
   }
+  selVis=vis.map(s=>s.id);
   const days=new Map(); vis.forEach(s=>{const d=new Date(s.ts),k=d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate();if(!days.has(k))days.set(k,[]);days.get(k).push(s);});
   days.forEach(list=>{
     const names=[...new Set(list.map(s=>s.name))];
     const grid=el('div',{class:'gridp'+(reveal?' reveal':'')});
-    list.forEach(s=>{const b=el('button',{type:'button',class:(s.fav?'fav':'')+(s.kind==='video'?' vid':''),'data-dur':s.kind==='video'?durText(s.dur||0):null,'aria-label':s.name+(s.kind==='video'?' video, ':' photo, ')+new Date(s.ts).toLocaleTimeString(),onclick:()=>openDetail(s.id)});b.style.backgroundImage='url('+s.thumb+')';grid.append(b);});
+    list.forEach(s=>{
+      const on=sel.has(s.id);
+      const b=el('button',{type:'button',class:(s.fav?'fav':'')+(s.kind==='video'?' vid':'')+(selMode?' pick':'')+(on?' sel':''),'data-id':s.id,'data-dur':s.kind==='video'?durText(s.dur||0):null,
+        'aria-pressed':selMode?(on?'true':'false'):null,'aria-label':s.name+(s.kind==='video'?' video, ':' photo, ')+new Date(s.ts).toLocaleTimeString(),
+        onclick:()=>{if(selMode)toggleSel(s.id);else openDetail(s.id);}},el('span',{class:'ck','aria-hidden':'true'},icon('check')));
+      b.style.backgroundImage='url('+s.thumb+')'; grid.append(b);
+    });
     body.append(el('section',{class:'day'},el('h3',{text:fmtDay(list[0].ts)}),el('p',{text:list.length+(list.length===1?' photo':' photos')+' on '+names.slice(0,3).join(', ')+(names.length>3?' and '+(names.length-3)+' more':'')}),grid));
   });
-  reveal=false;
+  reveal=false; selUI();
+}
+/* ---------- select several and export them together ---------- */
+function setSelect(on){selMode=on;sel.clear();selFiles.clear();delArm=0;if(galOpen)renderGallery();}
+function selReady(){for(const id of sel)if(!selFiles.has(id))return false;return true;}
+function selUI(){
+  const n=sel.size, ready=selReady(), any=shots.some(s=>!s.hidden);
+  const sb=$('#selBtn'); sb.textContent=selMode?'Cancel':'Select'; sb.hidden=!selMode&&!any;
+  $('#galTitle').textContent=selMode?(n?n+' selected':'Select items'):'Roll';
+  $('#galCount').hidden=selMode; $('#selBar').hidden=!selMode;
+  const sv=$('#selSave'); sv.disabled=!n||!ready; $('#selSaveTxt').textContent=!n?'Save':!ready?'Preparing\u2026':'Save '+n;
+  $('#selAll').textContent=selVis.length&&selVis.every(id=>sel.has(id))?'Deselect all':'Select all'; $('#selAll').disabled=!selVis.length;
+  const d=$('#selDel'); d.disabled=!n;
+  if(Date.now()-delArm>3500){delArm=0;d.classList.remove('warn');d.lastChild.textContent='Delete';}
+}
+function markSel(id){const b=document.querySelector('.gridp button[data-id="'+id+'"]');if(b){const on=sel.has(id);b.classList.toggle('sel',on);b.setAttribute('aria-pressed',on?'true':'false');}}
+async function prepFile(id){                    // load the file as soon as it is picked, so the share sheet can open straight from the tap
+  const m=shots.find(s=>s.id===id), b=m?await DB.blobs(id):null;
+  if(!sel.has(id)) return;
+  if(b&&b.out) selFiles.set(id,{blob:b.out,name:fname(m)});
+  else{sel.delete(id);markSel(id);toast('One item is no longer stored here and was left out.');}
+  selUI();
+}
+function toggleSel(id){
+  if(sel.has(id)){sel.delete(id);selFiles.delete(id);}else{sel.add(id);prepFile(id);}
+  markSel(id); selUI();
+}
+function selFileList(){
+  const used=new Set();
+  return [...sel].filter(id=>selFiles.has(id)).map(id=>{
+    const f=selFiles.get(id); let nm=f.name; const dot=nm.lastIndexOf('.');
+    for(let i=2;used.has(nm);i++) nm=f.name.slice(0,dot)+'-'+i+f.name.slice(dot);   // two shots in the same second get distinct names
+    used.add(nm);
+    return new File([f.blob],nm,{type:f.blob.type||(/\.mp4$/.test(nm)?'video/mp4':/\.webm$/.test(nm)?'video/webm':'image/jpeg')});
+  });
+}
+async function exportSel(){
+  if(!sel.size||!selReady()) return;
+  const files=selFileList(), n=files.length;
+  if(!DL){
+    let can=false; try{can=!!(navigator.canShare&&navigator.canShare({files}));}catch(e){}
+    if(can){
+      try{await navigator.share({files});setSelect(false);}
+      catch(e){if(!(e&&e.name==='AbortError'))toast('The share sheet could not take that many. Try fewer at a time.',4200);}
+      return;
+    }
+  }
+  const btn=$('#selSave'); btn.disabled=true; let ok=0, stop=false;
+  try{
+    for(const f of files){
+      let r=await saveBlob(f,f.name,true);
+      if(r==='busy'){await sleep(1500);r=await saveBlob(f,f.name,true);}
+      if(r==='declined'){stop=true;break;}
+      if(r==='saved') ok++;
+      await sleep(350);
+    }
+  }finally{btn.disabled=false;}
+  toast(ok===n?(n===1?'1 item saved':n+' items saved'):stop?'Stopped after '+ok+' of '+n:ok+' of '+n+' saved',3400);
+  if(ok===n) setSelect(false);
+}
+async function deleteSel(){
+  const d=$('#selDel'), n=sel.size; if(!n) return;
+  if(!delArm){delArm=Date.now();d.classList.add('warn');d.lastChild.textContent='Delete '+n+'?';setTimeout(selUI,3600);return;}
+  const ids=[...sel]; for(const id of ids) await DB.del(id);
+  shots=shots.filter(s=>!sel.has(s.id)); setSelect(false); ui();
+  toast(n===1?'1 item deleted':n+' items deleted');
 }
 async function developRoll(id){
   const list=shots.filter(s=>s.roll===id&&s.hidden);
@@ -1734,19 +1831,19 @@ async function developRoll(id){
   if(S.roll&&S.roll.id===id) S.roll=S.rollSize?newRoll():null;
   saveSettings(); reveal=true; renderGallery(); ui(); toast(list.length+' frames developed');
 }
-function openGallery(){closeSheet();galOpen=true;show($('#gal'));renderGallery();$('#galBack').focus();}
-function closeGallery(){if(!galOpen)return;galOpen=false;hide($('#gal'));$('#rollBtn').focus();}
+function openGallery(){closeSheet();selMode=false;sel.clear();selFiles.clear();delArm=0;galOpen=true;show($('#gal'));renderGallery();$('#galBack').focus();}
+function closeGallery(){if(!galOpen)return;galOpen=false;selMode=false;sel.clear();selFiles.clear();hide($('#gal'));$('#rollBtn').focus();}
 const DL=(window.claude&&typeof window.claude.use==='function')?window.claude.use('downloads').catch(()=>null):null;
-async function saveBlob(blob,name){
+async function saveBlob(blob,name,noShare){
   if(DL){
     const dl=await DL;
     if(!dl) return 'hold';
     try{await dl.save({filename:name,data:blob});return 'saved';}
     catch(e){const c=e&&e.code;return c==='declined'?'declined':c==='rate_limited'?'busy':'hold';}
   }
-  try{const f=new File([blob],name,{type:blob.type||'image/jpeg'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return 'saved';}}
+  if(!noShare) try{const f=new File([blob],name,{type:blob.type||'image/jpeg'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return 'saved';}}
   catch(e){if(e&&e.name==='AbortError')return 'declined';}
-  try{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();a.remove();return 'saved';}catch(e){}
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),20000);return 'saved';}catch(e){}
   return 'hold';
 }
 function saveMsg(r){toast(r==='saved'?'Saved':r==='declined'?'Not saved':r==='busy'?'One save at a time. Try again in a moment.':'Press and hold the photo, then choose Save to Photos.',r==='hold'?5200:2600);}
@@ -1817,6 +1914,13 @@ function boot(){
   $('#flipBtn').onclick=async()=>{tapEV=0;userEV=0;$('#foc').hidden=true;S.facing=S.facing==='user'?'environment':'user';saveSettings();if(live.on){dropLive();await startLive();}msg(S.facing==='user'?'Front camera':'Back camera');};
   $('#mPhoto').onclick=()=>setMode('photo'); $('#mVideo').onclick=()=>setMode('video'); $('#mBooth').onclick=()=>setMode('booth');
   $('#rollBtn').onclick=()=>{if(rec)stopRec();openGallery();}; $('#galBack').onclick=closeGallery; $('#detBack').onclick=()=>closeDetail();
+  $('#selBtn').onclick=()=>setSelect(!selMode);
+  $('#selSave').onclick=exportSel; $('#selDel').onclick=deleteSel;
+  $('#selAll').onclick=()=>{
+    if(selVis.length&&selVis.every(id=>sel.has(id))) selVis.forEach(id=>{sel.delete(id);selFiles.delete(id);});
+    else selVis.forEach(id=>{if(!sel.has(id)){sel.add(id);prepFile(id);}});
+    renderGallery();
+  };
   $('#tabAll').onclick=()=>{galTab='all';renderGallery();}; $('#tabFav').onclick=()=>{galTab='fav';renderGallery();};
   $('#sheetDone').onclick=closeSheet;
   $('#flashBtn').onclick=()=>{S.flash.on=!S.flash.on;changed();msg(S.flash.on?'Flash on':'Flash off',1300);};
@@ -1845,7 +1949,7 @@ function boot(){
   stage.addEventListener('touchend',endPinch); stage.addEventListener('touchcancel',endPinch);
   document.addEventListener('gesturestart',e=>e.preventDefault());
   document.addEventListener('keydown',e=>{
-    if(e.key==='Escape'){if(detOpen)closeDetail();else if(galOpen)closeGallery();else if(sheetName)closeSheet();}
+    if(e.key==='Escape'){if(detOpen)closeDetail();else if(galOpen&&selMode)setSelect(false);else if(galOpen)closeGallery();else if(sheetName)closeSheet();}
   });
   if(window.ResizeObserver) new ResizeObserver(()=>{fitKey='';requestDraw();}).observe(screen); else window.addEventListener('resize',()=>{fitKey='';requestDraw();});
   window.addEventListener('pagehide',()=>{if(live.on)dropLive();});
